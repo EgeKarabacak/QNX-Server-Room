@@ -1,4 +1,4 @@
-//Ege Karabacak A8
+//This is our Client !
 
 #include <stdlib.h>
 #include <stdio.h>
