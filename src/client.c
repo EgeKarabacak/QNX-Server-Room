@@ -57,12 +57,12 @@ int main(int argc, char **argv)
 
 
 
-
+while(1){
     //send the message to the server and get a reply
     status = MsgSend(coid, &message, sizeof(message), &incoming_msg, sizeof(incoming_msg));
 //    printf("message is %s \n", message);
 //    printf("Status is %d \n", status);
-
+}
 
 
     return 0;

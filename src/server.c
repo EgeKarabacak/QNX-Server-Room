@@ -22,6 +22,8 @@ int main(void) {
     name_attach_t *attach;
     struct _msg_info info;
     int checksumMsg =0;
+    int pidArray[ARR_SIZE];
+    int avg_load;
 
     typedef union
     {
@@ -46,7 +48,30 @@ int main(void) {
         //Print Rcvid
         printf("Rcvid: %d \n", rcvid);
         printf("Client pid is %d \n", info.pid);
+        //add client pid to array
+        pidArray[info.pid] = info.pid;
         //print_pid(pidArray);
+        
+        //do room management here
+        if(len(pidArray)>5){ // if we have over 5 clients in the room
+        //we calculate the average load.
+            for(int i=0; i<len(pidArray); i++){
+                if(pidArray[i].load == 2){
+                    avg_load += 2;
+                }
+                if(pidArray[i].load == 1){
+                    avg_load += 1;
+                }
+                else{
+                    avg_load += 0;
+                }
+            if(avg_load > 2*len(pidArray)){
+                //send message to client to swithc it state to idle = 0
+                //MsgReply(rcvid, EOK, &checksumMsg, sizeof(checksumMsg));
+            }
+                
+            }
+        }
         myMsgReply = MsgReply(rcvid, EOK, &checksumMsg, sizeof(checksumMsg));
     }
 
