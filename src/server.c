@@ -1,78 +1,88 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/neutrino.h>
+#include <process.h>
+#include <errno.h>
+#include <sys/netmgr.h>
+#include <string.h>
 #include <sys/iofunc.h>
 #include <sys/dispatch.h>
-#include <time.h>
 
-#define MAX_STRING_LEN    256
-#define TIMER_PULSE_EVENT (_PULSE_CODE_MINAVAIL + 7)
 //resources:
-//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/c/connectattach.html
-//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/m/msgsend.html
+//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/c/channelcreate.html
+//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/m/msgreceive.html
+//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/m/msgreply.html
+#define MAX_STRING_LEN    256
+#define ARR_SIZE 10
 
-//int random_generator();
+void print_pid(int arr[]);
 
-int main(int argc, char **argv)
-{
-int coid, status;
-char message[MAX_STRING_LEN] = "test";
-int incoming_msg, pid;
-timer_t timerid;
-struct itimerspec it;
-struct sigevent event;
-int random_number;
+int main(void) {
+    int chid, pid, rcvid, myMsgReply;
+    name_attach_t *attach;
+    struct _msg_info info;
+    int checksumMsg =0;
+    int pidArray[ARR_SIZE];
+    int avg_load;
+    int index = 0;
 
-typedef struct
-{
-   int load;// [0,1,2]  0 = low , 1 = mid = 2 = high
-   int state; // 0 if not working , 1 if its active
-} client_t;
+    typedef union
+    {
+        struct _pulse pulse;
+        char rmsg [MAX_STRING_LEN +1];
+    } myMessage_t;
 
-client_t client_status;
+     typedef struct
+    {
+        int load;// [0,1,2]  0 = low , 1 = mid = 2 = high
+        int state; // 0 if not working , 1 if its active
+    } server_t;
 
-//Create a Connection to Server Channel
-coid = name_open("Server Room",0);
+    myMessage_t msg;
 
-//Print client pid
-pid = getpid();
-printf("My Pid is %d \n", pid);
+    //Create a Channel
+    attach = name_attach(NULL, "Server Room", 0);
 
-srand(time(NULL));
-for(int i = 0; i < 10; i++){
-random_number = rand() % 3;
-printf("Random number is %d, \n", random_number);
-}
+    while(1){
+        rcvid = MsgReceive(attach->chid, &msg.rmsg, sizeof(msg.rmsg), &info);
 
+        //Print Rcvid
+        printf("Rcvid: %d \n", rcvid);
+        printf("Client pid is %d \n", info.pid);
+        //add client pid to array
+        pidArray[index] = info.pid;
+        index+=1;
+        printf("New index is %d \n", index);
 
-/* set up the pulse event that will be delivered to us by the kernel
-* whenever the timer expires  (USE the MACRO SIGEV_PULSE_INIT)
-*/
-SIGEV_PULSE_INIT(&event, coid, SIGEV_PULSE_PRIO_INHERIT, TIMER_PULSE_EVENT, &timerid);
+        for(int i = 0; i < index; i++){
+        printf("Pid is %d \n", pidArray[i]);
+        }
+        //print_pid(pidArray);
 
-/* Create a timer which will send the above pulse event
-* 5 seconds from now and then repeatedly after that every
-* 1500 milliseconds(1.5 secs).  The event to use has already been filled in
-* above and is in the variable called 'event'.
-*/
-// timer_create(CLOCK_REALTIME, &event, &timerid);
-// it.it_value.tv_sec = 5;
-// it.it_value.tv_nsec = 0;
-// it.it_interval.tv_sec = 1;
-// it.it_interval.tv_nsec = 500000000;
-// timer_settime(timerid, 0, &it, NULL);
+        //do room management here
+//        if(len(pidArray)>5){ // if we have over 5 clients in the room
+//        //we calculate the average load.
+//            for(int i=0; i<len(pidArray); i++){
+//                if(pidArray[i].load == 2){
+//                    avg_load += 2;
+//                }
+//                if(pidArray[i].load == 1){
+//                    avg_load += 1;
+//                }
+//                else{
+//                    avg_load += 0;
+//                }
+//            if(avg_load > 2*len(pidArray)){
+//                //send message to client to swithc it state to idle = 0
+//                //MsgReply(rcvid, EOK, &checksumMsg, sizeof(checksumMsg));
+//            }
+//
+//            }
+//        }
+        //myMsgReply = MsgReply(rcvid, EOK, &checksumMsg, sizeof(checksumMsg));
+    }
 
+//    }
 
-
-
-
-//send the message to the server and get a reply
-status = MsgSend(coid, &message, sizeof(message), &incoming_msg, sizeof(incoming_msg));
-// printf("message is %s \n", message);
-// printf("Status is %d \n", status);
-
-
-
-return 0;
+    return 0;
 }
