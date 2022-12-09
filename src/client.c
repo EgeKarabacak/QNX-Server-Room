@@ -40,45 +40,34 @@ coid = name_open("Server Room",0);
 pid = getpid();
 printf("My Pid is %d \n", pid);
 
-srand(time(NULL));
-//for(int i = 0; i < 10; i++){
-load = rand() % 3;
-printf("Random number is %d, \n", load);
+while(1){
 
+   switch{
+      case(state = 1){
+         srand(time(NULL));
+         load = rand() % 3;
+         printf("Random number is %d, \n", load);
 
+   //send the message to the server and get a reply
+   status = MsgSend(coid, &load, sizeof(load), &incoming_msg, sizeof(incoming_msg));
+   if(incoming_msg == 1){
+      load = 0;
+      state = 0;
+      printf("Switching off \n");
+      }
+      printf("message is %d \n", incoming_msg);
+      printf("Status is %d \n", status);
+      }
 
-/* set up the pulse event that will be delivered to us by the kernel
-* whenever the timer expires  (USE the MACRO SIGEV_PULSE_INIT)
-*/
-SIGEV_PULSE_INIT(&event, coid, SIGEV_PULSE_PRIO_INHERIT, TIMER_PULSE_EVENT, &timerid);
-
-/* Create a timer which will send the above pulse event
-* 5 seconds from now and then repeatedly after that every
-* 1500 milliseconds(1.5 secs).  The event to use has already been filled in
-* above and is in the variable called 'event'.
-*/
-
-// timer_create(CLOCK_REALTIME, &event, &timerid);
-// it.it_value.tv_sec = 5;
-// it.it_value.tv_nsec = 0;
-// it.it_interval.tv_sec = 1;
-// it.it_interval.tv_nsec = 500000000;
-// timer_settime(timerid, 0, &it, NULL);
-
-
-
-
-
-//send the message to the server and get a reply
-status = MsgSend(coid, &load, sizeof(load), &incoming_msg, sizeof(incoming_msg));
-if(incoming_msg == 1){
-   load = 0;
-   state = 0;
+      case(state = 0){
+         //sleep between 1 and 10 seconds and switch state back to 1 and pick a random load
+         srand(time(NULL));
+         sleep(rand() % 10 + 1);
+         printf("Switching back on \n");
+         state = 1;
+      }
    }
-printf("message is %d \n", incoming_msg);
-printf("Status is %d \n", status);
-
-
-
+}
 return 0;
+
 }
