@@ -48,6 +48,7 @@ int main(void) {
     while(1){
         rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), &info);
 
+        if(overload == 0){
         //Print Rcvid
         printf("Rcvid: %d \n", rcvid);
         printf("Client pid is %d \n", info.pid);
@@ -59,9 +60,10 @@ int main(void) {
         printf("New index is %d \n", index);
 
         for(int i = 0; i < index; i++){
-        printf("Pid is %d \n", pidArray[i]);
-        printf("load is  %d \n", loadArray[i]);
+        printf("Client %d's Pid is %d \n",i+1, pidArray[i]);
+        printf("Client %d's load is  %d \n",i+1, loadArray[i]);
         }
+
 
 
         //do room management here
@@ -78,8 +80,8 @@ int main(void) {
                 else{
                     avg_load += 0;
                 }
-    
-            if(avg_load >= 2*index - 1 && avg_load > 8 ){
+
+            if(avg_load >= 2*index - 1){
                 //send message to client to swithc it state to idle = 0
                 printf("We have overload in the room \n");
                 overload = 1;
@@ -93,6 +95,7 @@ int main(void) {
 
             }
         }
+       }
         //myMsgReply = MsgReply(rcvid, EOK, &checksumMsg, sizeof(checksumMsg));
     }
 
