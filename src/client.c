@@ -14,6 +14,7 @@
 
 //int random_generator();
 
+
 int main(int argc, char **argv)
 {
 int coid, status;
@@ -22,7 +23,7 @@ int incoming_msg, pid;
 timer_t timerid;
 struct itimerspec it;
 struct sigevent event;
-int random_number;
+int load;
 
 typedef struct
 {
@@ -40,10 +41,10 @@ pid = getpid();
 printf("My Pid is %d \n", pid);
 
 srand(time(NULL));
-for(int i = 0; i < 10; i++){
-random_number = rand() % 3;
-printf("Random number is %d, \n", random_number);
-}
+//for(int i = 0; i < 10; i++){
+load = rand() % 3;
+printf("Random number is %d, \n", load);
+
 
 
 /* set up the pulse event that will be delivered to us by the kernel
@@ -56,6 +57,7 @@ SIGEV_PULSE_INIT(&event, coid, SIGEV_PULSE_PRIO_INHERIT, TIMER_PULSE_EVENT, &tim
 * 1500 milliseconds(1.5 secs).  The event to use has already been filled in
 * above and is in the variable called 'event'.
 */
+
 // timer_create(CLOCK_REALTIME, &event, &timerid);
 // it.it_value.tv_sec = 5;
 // it.it_value.tv_nsec = 0;
@@ -68,9 +70,13 @@ SIGEV_PULSE_INIT(&event, coid, SIGEV_PULSE_PRIO_INHERIT, TIMER_PULSE_EVENT, &tim
 
 
 //send the message to the server and get a reply
-status = MsgSend(coid, &message, sizeof(message), &incoming_msg, sizeof(incoming_msg));
-// printf("message is %s \n", message);
-// printf("Status is %d \n", status);
+status = MsgSend(coid, &load, sizeof(load), &incoming_msg, sizeof(incoming_msg));
+if(incoming_msg == 1){
+   load = 0;
+   state = 0;
+   }
+printf("message is %d \n", incoming_msg);
+printf("Status is %d \n", status);
 
 
 
