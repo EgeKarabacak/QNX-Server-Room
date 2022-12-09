@@ -1,104 +1,65 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/neutrino.h>
-#include <process.h>
-#include <errno.h>
-#include <sys/netmgr.h>
 #include <string.h>
+#include <sys/neutrino.h>
 #include <sys/iofunc.h>
 #include <sys/dispatch.h>
+#include <time.h>
 
-//resources:
-//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/c/channelcreate.html
-//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/m/msgreceive.html
-//http://www.qnx.com/developers/docs/7.1/#com.qnx.doc.neutrino.lib_ref/topic/m/msgreply.html
-#define MAX_STRING_LEN    256
-#define ARR_SIZE 10
 
-void print_pid(int arr[]);
+void poweron();
 
-int main(void) {
-    int chid, pid, rcvid, myMsgReply;
-    name_attach_t *attach;
-    struct _msg_info info;
-    int checksumMsg =0;
-    int pidArray[ARR_SIZE];
-    int loadArray[ARR_SIZE];
-    int avg_load;
-    int index = 0;
-    int overload = 0;
+void poweron(){
+sleep(3); // Sleep for 3 seconds
+//val = 1;
+printf("Power on Succcessful \n");
+//load2 = rand() % 3;
 
-    typedef union
-    {
-        struct _pulse pulse;
-        char rmsg [MAX_STRING_LEN +1];
-        int load;
-    } myMessage_t;
+}
 
-     typedef struct
-    {
-        int load;// [0,1,2]  0 = low , 1 = mid = 2 = high
-    } server_t;
+int main(int argc, char **argv)
+{
+int coid, status,pid,status2,load2;
+int incoming_msg = 0;
+int load;
+int state;
 
-    myMessage_t msg;
+typedef struct
+{
+   int load;// [0,1,2]  0 = low , 1 = mid = 2 = high
+   int state; // 0 if not working , 1 if its active
+} client_t;
 
-    //Create a Channel
-    attach = name_attach(NULL, "Server Room", 0);
 
-    while(1){
-        rcvid = MsgReceive(attach->chid, &msg, sizeof(msg), &info);
+//Create a Connection to Server Channel
+coid = name_open("Server Room",0);
 
-        if(overload == 0){
-        //Print Rcvid
-        printf("Rcvid: %d \n", rcvid);
-        printf("Client pid is %d \n", info.pid);
-        printf("Client load is %d \n", msg.load);
-        //add client pid to array
-        pidArray[index] = info.pid;
-        loadArray[index] = msg.load;
-        index+=1;
-        printf("New index is %d \n", index);
+//Print client pid
+pid = getpid();
+printf("My Pid is %d \n", pid);
 
-        for(int i = 0; i < index; i++){
-        printf("Client %d's Pid is %d \n",i+1, pidArray[i]);
-        printf("Client %d's load is  %d \n",i+1, loadArray[i]);
-        }
+srand(time(NULL));
+load = rand() % 3;
+printf("Random number is %d, \n", load);
+
+
+//send the message to the server and get a reply
+status = MsgSend(coid, &load, sizeof(load), &incoming_msg, sizeof(incoming_msg));
+printf("message is %d \n", incoming_msg);
+printf("Status is %d \n", status);
+
+if(incoming_msg == 1){
+printf("Received an overload notification, powering off \n");
+state = 0;
+poweron(state);
+load2 = rand() % 3;
+printf("new load is %d \n",load2);
+status2 = MsgSend(coid, &load2, sizeof(load2), &incoming_msg, sizeof(incoming_msg));
+printf("Status2 is %d \n", status2);
+
+}
 
 
 
-        //do room management here
-         if(index>5){ // if we have over 5 clients in the room
-         printf("We have more than 5 clients in the room \n");
-         //we calculate the average load.
-         for(int i=0; i<sizeof(pidArray)/sizeof(int); i++){
-                if(loadArray[i] == 2){
-                    avg_load += 2;
-                }
-                if(loadArray[i] == 1){
-                    avg_load += 1;
-                }
-                else{
-                    avg_load += 0;
-                }
-
-            if(avg_load >= 2*index - 1){
-                //send message to client to swithc it state to idle = 0
-                printf("We have overload in the room \n");
-                overload = 1;
-                MsgReply(rcvid, EOK, &overload, sizeof(overload));
-                overload = 0;
-                for(int i = 0; i < index; i++){
-                    loadArray[index] == 0;
-                    avg_load = 0;
-                }
-            }
-
-            }
-        }
-       }
-        //myMsgReply = MsgReply(rcvid, EOK, &checksumMsg, sizeof(checksumMsg));
-    }
-
-
-    return 0;
+return 0;
 }
