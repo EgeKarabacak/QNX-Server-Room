@@ -1,4 +1,2 @@
 # QNX Server Room
-
-timer is our client (servers) 
-server is our room (server room)
+A project that simulates a live server room in QNX and networking between embedded systems.
